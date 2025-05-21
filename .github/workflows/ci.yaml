@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - main
-  pull_request_target:
+  pull_request:
     types: [opened]
     paths:
       - '**.py'
@@ -57,12 +57,16 @@ jobs:
             name: coverage-report
             path: coverage.xml
         
+      # Run only on pull requests  
       - name: Cobertura coverage check
+        if: github.event_name != 'pull_request'
         uses: 5monkeys/cobertura-action@master
         with:
             path: coverage.xml
             minimum_coverage: 80
+            fail_below_threshold: true
             show_branch: true
+            skip_covered: true
             report_name: django-coverage-report
 
     #     # --- Security checks --- 
