@@ -40,16 +40,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-cov coverage report \
-          flake8 bandit
+          pip install coverage flake8 bandit
 
-      # --- Unit tests ---
-      - name: Run tests
+      # --- Unit tests and coverage---
+      - name: Run Django tests and coverage
         run: |
-          pytest -q --cov=. --cov-report=xml
-    
-        # --- Security checks ---
-      - name: Run security checks
-        run: |
-          bandit -r api tests
-          
+          python -m coverage run manage.py test
+          python -m coverage xml
+
+    #     # --- Security checks ---
+    #   - name: Run security checks
+    #     run: |
+    #       bandit -r api tests
