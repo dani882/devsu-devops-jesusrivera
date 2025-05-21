@@ -8,10 +8,10 @@ on:
   pull_request:
     types: [opened]
     paths:
-      - '**.py'
+      - "**.py"
       - Dockerfile
-      - '.github/workflows/ci.yaml'
-      - 'requirements.txt'
+      - ".github/workflows/ci.yaml"
+      - "requirements.txt"
 
 # Permissions required for the workflow to push Docker images to the GitHub Container Registry and other actions
 permissions:
@@ -21,13 +21,14 @@ permissions:
   pull-requests: write
 
 env:
-    IMAGE_NAME: ghcr.io/${{ github.repository }}
-    IMAGE_TAG: ${{ github.sha }}
-    PYTHON_VERSION: 3.11.3
+  IMAGE_NAME: ghcr.io/${{ github.repository }}
+  IMAGE_TAG: ${{ github.sha }}
+  PYTHON_VERSION: 3.11.3
 
 jobs:
   build-test-scan:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -35,8 +36,8 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{env.PYTHON_VERSION}} 
-          cache: 'pip'
+          python-version: ${{env.PYTHON_VERSION}}
+          cache: "pip"
 
       - name: Install dependencies
         run: |
@@ -44,32 +45,31 @@ jobs:
           pip install -r requirements.txt
           pip install coverage flake8 bandit
 
-      # Django tests and coverage
+        # Django tests and coverage
       - name: Run Django tests and coverage
         run: |
           python -m coverage run manage.py test
           python -m coverage xml
 
-      # Storage of coverage report
-      - name: Upload coverage report
+      - name: Upload coverage XML report
         uses: actions/upload-artifact@v4
         with:
-            name: coverage-report
-            path: coverage.xml
-        
-      # Run only on pull requests  
-      - name: Cobertura coverage check
-        if: github.event_name != 'pull_request'
-        uses: 5monkeys/cobertura-action@master
-        with:
-            path: coverage.xml
-            minimum_coverage: 80
-            fail_below_threshold: true
-            show_branch: true
-            skip_covered: true
-            report_name: django-coverage-report
+          name: coverage-report
+          path: coverage.xml
 
-    #     # --- Security checks --- 
-    #   - name: Run security checks
-    #     run: |
-    #       bandit -r api tests
+      # Run only on pull requests
+      - name: Cobertura coverage check
+        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
+        uses: monkeys/cobertura-action@master
+        with:
+          path: coverage.xml
+          minimum_coverage: 80
+          fail_below_threshold: false
+          skip_covered: true
+          only_changed_files: true
+          show_line: true
+          show_branch: true
+          show_missing: true
+          show_missing_max_length: 120
+          link_missing_lines: true
+          report_name: django-coverage
