@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -15,13 +16,15 @@ permissions:
   contents: read
   packages: write
   security-events: write
+  pull-requests: write
 
 env:
     IMAGE_NAME: ghcr.io/${{ github.repository }}
     IMAGE_TAG: ${{ github.sha }}
+    PYTHON_VERSION: 3.11
 
 jobs:
-  build:
+  build-test-scan:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -30,14 +33,22 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.11
+          python-version: ${ env.PYTHON_VERSION }
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-cov flake8 bandit
+          pip install pytest pytest-cov coverage report \
+          flake8 bandit
 
+      # --- Unit tests ---
       - name: Run tests
         run: |
-          pytest
+          pytest -q --cov=. --cov-report=xml
+    
+        # --- Security checks ---
+      - name: Run security checks
+        run: |
+          bandit -r api tests
