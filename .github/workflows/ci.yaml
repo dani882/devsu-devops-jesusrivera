@@ -6,12 +6,14 @@ on:
     branches:
       - main
   pull_request:
+    types: [opened]
     paths:
       - '**.py'
       - Dockerfile
       - '.github/workflows/ci.yaml'
       - 'requirements.txt'
 
+# Permissions required for the workflow to push Docker images to the GitHub Container Registry and other actions
 permissions:
   contents: read
   packages: write
@@ -42,13 +44,28 @@ jobs:
           pip install -r requirements.txt
           pip install coverage flake8 bandit
 
-      # --- Unit tests and coverage---
+      # Django tests and coverage
       - name: Run Django tests and coverage
         run: |
           python -m coverage run manage.py test
           python -m coverage xml
 
-    #     # --- Security checks ---
+      # Storage of coverage report
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+            name: coverage-report
+            path: coverage.xml
+        
+      - name: Cobertura coverage check
+        uses: 5monkeys/cobertura-action@master
+        with:
+            path: coverage.xml
+            minimum_coverage: 80
+            show_branch: true
+            report_name: django-coverage-report
+
+    #     # --- Security checks --- 
     #   - name: Run security checks
     #     run: |
     #       bandit -r api tests
