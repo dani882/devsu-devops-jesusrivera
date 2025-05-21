@@ -21,7 +21,7 @@ permissions:
 env:
     IMAGE_NAME: ghcr.io/${{ github.repository }}
     IMAGE_TAG: ${{ github.sha }}
-    PYTHON_VERSION: 3.11
+    PYTHON_VERSION: 3.11.3
 
 jobs:
   build-test-scan:
