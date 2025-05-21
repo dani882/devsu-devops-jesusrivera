@@ -60,7 +60,7 @@ jobs:
       # Run only on pull requests
       - name: Cobertura coverage check
         if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
-        uses: monkeys/cobertura-action@master
+        uses: 5monkeys/cobertura-action@master
         with:
           path: coverage.xml
           minimum_coverage: 80
