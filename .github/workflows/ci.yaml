@@ -74,6 +74,11 @@ jobs:
           link_missing_lines: true
           report_name: django-coverage
 
+      # Run Coding Style Checks
       - name: Run flake8 linter code style check
         run: |
           flake8 -q --count --statistics --ignore=E,F,W api
+
+      # Run Python security checks
+      - name: Run bandit security check
+        uses: PyCQA/bandit-action@v1
