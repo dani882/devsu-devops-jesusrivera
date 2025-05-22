@@ -76,4 +76,4 @@ jobs:
 
       - name: Run flake8 linter code style check
         run: |
-          flake8 . --count --max-line-length=120 --statistics
+          flake8 -q --count --statistics api
