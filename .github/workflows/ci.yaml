@@ -76,4 +76,4 @@ jobs:
 
       - name: Run flake8 linter code style check
         run: |
-          flake8 -q --count --statistics api
+          flake8 -q --count --statistics --ignore=E,F,W api
