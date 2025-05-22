@@ -73,3 +73,7 @@ jobs:
           show_missing_max_length: 120
           link_missing_lines: true
           report_name: django-coverage
+
+      - name: Run flake8 linter code style check
+        run: |
+          flake8 . --count --max-line-length=120 --statistics
