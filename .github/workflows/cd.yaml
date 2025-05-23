@@ -3,12 +3,9 @@ on:
   workflow_dispatch:
 jobs:
   deploy-kubernetes:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
     - name: Create cluster
       id: k3d
       uses: ./.github/actions/create-k3d-cluster
