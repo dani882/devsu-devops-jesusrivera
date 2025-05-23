@@ -8,3 +8,12 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Create cluster
+      id: k3d
+      uses: ./.github/actions/create-k3d-cluster
+
+    - name: Use kubeconfig
+      run: kubectl get pods
+      env:
+        KUBECONFIG: ${{ steps.k3d.outputs.kubeconfig }}
