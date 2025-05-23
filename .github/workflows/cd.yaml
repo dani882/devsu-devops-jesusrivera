@@ -2,21 +2,65 @@ name: CD
 
 on:
   workflow_dispatch:
+
 jobs:
-  deploy-kubernetes:
+  create-cluster:
+    name: Create k3d Cluster
     runs-on: ubuntu-latest
 
+    outputs:
+      kubeconfig: ${{ steps.k3d.outputs.kubeconfig }}
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Create cluster
-      id: k3d
-      uses: ./.github/actions/create-k3d-cluster
-      with:
-        cluster-name: devsu
+      - name: Create k3d cluster
+        id: k3d
+        uses: ./.github/actions/create-k3d-cluster
+        with:
+          cluster-name: devsu
 
-    - name: Use kubeconfig
-      run: kubectl get all -A
-      env:
-        KUBECONFIG: ${{ steps.k3d.outputs.kubeconfig }}
+      - name: Verify cluster
+        run: kubectl get all -A
+        env:
+          KUBECONFIG: ${{ steps.k3d.outputs.kubeconfig }}
+
+  deploy-app:
+    name: Deploy Devsu App with Terraform
+    needs: create-cluster
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./terraform
+
+    env:
+      KUBE_CONFIG_PATH: ${{ needs.create-cluster.outputs.kubeconfig }}
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        id: init
+        run: terraform init
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -input=false -no-color
+
+      # - name: Terraform Apply
+      #   if: github.ref == 'refs/heads/main'
+      #   run: terraform apply -auto-approve -input=false
