@@ -1,0 +1,34 @@
+name: "Create k3d Cluster"
+description: "Provision a local k3d Kubernetes cluster and expose KUBECONFIG"
+author: "@jesus.rivera"
+
+inputs:
+  cluster-name:
+    description: "Name of the k3d cluster to create"
+    required: true
+    
+runs:
+  using: "composite"
+  steps:
+    - name: Install k3d
+      shell: bash
+      run: |
+        curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+        k3d version
+
+    - name: Create k3d cluster
+      shell: bash
+      run: |
+        k3d cluster create ${{ inputs.cluster-name }} --wait
+        kubectl cluster-info
+        kubectl get nodes
+
+    - name: Export kubeconfig
+      id: export-kubeconfig
+      shell: bash
+      run: |
+        mkdir -p $HOME/.kube
+        k3d kubeconfig get${{ inputs.cluster-name }} > $HOME/.kube/config
+        echo "kubeconfig=$HOME/.kube/config" >> $GITHUB_OUTPUT
+        echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
+
