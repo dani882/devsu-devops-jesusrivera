@@ -12,6 +12,8 @@ jobs:
     - name: Create cluster
       id: k3d
       uses: ./.github/actions/create-k3d-cluster
+      with:
+        cluster-name: devsu
 
     - name: Use kubeconfig
       run: kubectl get pods
