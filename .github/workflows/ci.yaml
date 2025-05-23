@@ -98,6 +98,8 @@ jobs:
           tags: |
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:cache
+          cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:cache,mode=max
 
       # Generate SBOM (Software Bill of Materials) for the Docker image to see it in GitHub UI
       - name: Generate SBOM
