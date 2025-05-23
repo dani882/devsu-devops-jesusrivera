@@ -60,7 +60,7 @@ jobs:
       # Run only on pull requests
       - name: Cobertura coverage check
         if: github.event_name == 'pull_request' || github.event_name == 'pull_request_target'
-        uses: 5monkeys/cobertura-action@master
+        uses: 5monkeys/cobertura-action@v14
         with:
           path: coverage.xml
           minimum_coverage: 80
@@ -86,16 +86,15 @@ jobs:
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-            registry: ghcr.io
-            username: ${{ github.actor }}
-            password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-            context: .
-            push: true
-            tags: |
-                ${{ env.IMAGE_NAME }}:latest
-                ${{ env.IMAGE_NAME }}:${{ github.sha }}
-            
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
