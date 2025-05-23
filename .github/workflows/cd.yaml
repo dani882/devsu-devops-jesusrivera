@@ -17,6 +17,6 @@ jobs:
         cluster-name: devsu
 
     - name: Use kubeconfig
-      run: kubectl get pods
+      run: kubectl get all -A
       env:
         KUBECONFIG: ${{ steps.k3d.outputs.kubeconfig }}
