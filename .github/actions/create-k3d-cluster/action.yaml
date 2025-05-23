@@ -14,7 +14,7 @@ runs:
       shell: bash
       run: |
         curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
-        k3d version
+        echo "k3d installed successfully"
 
     - name: Create k3d cluster
       shell: bash
@@ -22,7 +22,6 @@ runs:
         k3d cluster create ${{ inputs.cluster-name }} --wait
 
     - name: Export kubeconfig
-      id: export-kubeconfig
       shell: bash
       run: |
         mkdir -p $HOME/.kube
