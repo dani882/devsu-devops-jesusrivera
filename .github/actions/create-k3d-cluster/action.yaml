@@ -23,7 +23,9 @@ runs:
     - name: Write k3d config template to file
       shell: bash
       run: |
-        echo "$K3D_CONFIG_TEMPLATE" > k3d-template.yaml
+        cat <<EOF > k3d-template.yaml
+        ${K3D_CONFIG_TEMPLATE}
+        EOF
       env:
         K3D_CONFIG_TEMPLATE: ${{ env.K3D_CONFIG_TEMPLATE }}
 
