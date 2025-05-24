@@ -4,12 +4,15 @@ author: "@jesus.rivera"
 
 inputs:
   cluster-name:
-    description: "Name of the k3d cluster to create"
+    description: "Name of the k3d cluster"
+    required: true
+  k3d-config:
+    description: "Path to the k3d config template file"
     required: true
 
 outputs:
   kubeconfig-contents:
-    description: "Kubeconfig YAML content"
+    description: "Raw kubeconfig content"
     value: ${{ steps.export-kubeconfig.outputs.kubeconfig-contents }}
 
 runs:
@@ -21,10 +24,18 @@ runs:
         curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
         echo "k3d installed successfully"
 
-    - name: Create k3d cluster
+    - name: Render k3d config file
+      uses: nowactions/envsubst@v1
+      with:
+        input: ${{ inputs.k3d-config }}
+        output: k3d-config.yaml
+      env:
+        CLUSTER_NAME: ${{ inputs.cluster-name }}
+
+    - name: Create cluster using rendered config
       shell: bash
       run: |
-        k3d cluster create ${{ inputs.cluster-name }} --wait
+        k3d cluster create --config k3d-config.yaml
 
     - name: Export kubeconfig
       id: export-kubeconfig
