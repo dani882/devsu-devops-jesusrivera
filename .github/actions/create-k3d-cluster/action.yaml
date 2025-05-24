@@ -7,6 +7,11 @@ inputs:
     description: "Name of the k3d cluster to create"
     required: true
 
+outputs:
+  kubeconfig-contents:
+    description: "Kubeconfig YAML content"
+    value: ${{ steps.export-kubeconfig.outputs.kubeconfig-contents }}
+
 runs:
   using: "composite"
   steps:
@@ -27,11 +32,6 @@ runs:
       run: |
         mkdir -p $HOME/.kube
         k3d kubeconfig get ${{ inputs.cluster-name }} > $HOME/.kube/config
-        echo "kubeconfig=$HOME/.kube/config" >> $GITHUB_OUTPUT
-        echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
-        cat $HOME/.kube/config
-
-outputs:
-  kubeconfig:
-    description: "Path to the generated kubeconfig file"
-    value: ${{ steps.export-kubeconfig.outputs.kubeconfig }}
+        echo "kubeconfig-contents<<EOF" >> $GITHUB_OUTPUT
+        cat $HOME/.kube/config >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT

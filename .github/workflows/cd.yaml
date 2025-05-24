@@ -1,9 +1,11 @@
 name: CD
+
 on:
   workflow_dispatch:
 
 env:
   TF_VAR_database_name: ${{ vars.DATABASE_NAME }}
+  CLUSTER_NAME: ${{ vars.CLUSTER_NAME }}
 
 jobs:
   create-cluster:
@@ -11,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     outputs:
-      kubeconfig: ${{ steps.k3d.outputs.kubeconfig }}
+      kubeconfig: ${{ steps.k3d.outputs.kubeconfig-contents }}
 
     steps:
       - name: Checkout code
@@ -21,17 +23,17 @@ jobs:
         id: k3d
         uses: ./.github/actions/create-k3d-cluster
         with:
-          cluster-name: devsu
+          cluster-name: ${{ env.CLUSTER_NAME }}
 
-      - name: Debug Kubeconfig Output
-        run: |
-          echo "Kubeconfig Output:"
-          echo "${{ steps.k3d.outputs.kubeconfig }}"
+      - name: Debug kubeconfig output
+        run: echo "${{ steps.k3d.outputs.kubeconfig-contents }}"
 
       - name: Verify cluster
-        run: kubectl get all -A
+        run: |
+          echo "${{ steps.k3d.outputs.kubeconfig-contents }}" > ~/.kube/config
+          kubectl get all -A
         env:
-          KUBECONFIG: ${{ steps.k3d.outputs.kubeconfig }}
+          KUBECONFIG: ~/.kube/config
 
   deploy-app:
     name: Deploy Devsu App
@@ -42,31 +44,31 @@ jobs:
         shell: bash
         working-directory: ./terraform
 
-    env:
-      KUBE_CONFIG_PATH: ${{ needs.create-cluster.outputs.kubeconfig }}
-      TF_VAR_kubeconfig_path: ${{ needs.create-cluster.outputs.kubeconfig }}
-
     steps:
-      - name: Checkout the repository
+      - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Write kubeconfig to file
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ needs.create-cluster.outputs.kubeconfig }}" > ~/.kube/config
+        env:
+          KUBE_CONFIG_PATH: ~/.kube/config
+          TF_VAR_kubeconfig_path: ~/.kube/config
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        id: init
         run: terraform init
 
       - name: Terraform Format Check
-        id: fmt
         run: terraform fmt -check
 
       - name: Terraform Validate
-        id: validate
         run: terraform validate
 
       - name: Terraform Plan
-        id: plan
         run: terraform plan -input=false -no-color
 
       - name: Terraform Apply
@@ -76,12 +78,11 @@ jobs:
       - name: Verify deployment
         run: |
           kubectl get pods -n devsu
-          kubectl get services -n devsu
+          kubectl get svc -n devsu
           kubectl get ingress -n devsu
-          kubectl get deployments -n devsu
 
-      - name: Port forward to service
+      - name: Port forward and test
         run: |
-          kubectl port-forward service/devsu-service 8080:8080 &
+          kubectl port-forward service/devsu-service 8080:8000 -n devsu &
           sleep 5
           curl http://localhost:8080
