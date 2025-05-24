@@ -27,7 +27,7 @@ jobs:
           KUBECONFIG: ${{ steps.k3d.outputs.kubeconfig }}
 
   deploy-app:
-    name: Deploy Devsu App with Terraform
+    name: Deploy Devsu App
     needs: create-cluster
     runs-on: ubuntu-latest
     defaults:

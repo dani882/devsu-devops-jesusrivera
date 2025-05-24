@@ -9,7 +9,7 @@ resource "kubernetes_namespace" "app_namespace" {
 resource "kubernetes_deployment" "devsu_app" {
   metadata {
     name      = "devsu-app"
-    namespace = kubernetes_namespace.app_namespace.metadata["name"]
+    namespace = kubernetes_namespace.app_namespace.metadata[0].name
     labels = {
       app = "devsu"
     }
