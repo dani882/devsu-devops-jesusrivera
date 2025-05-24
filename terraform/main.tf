@@ -1,17 +1,17 @@
 # Create a Kubernetes namespace for the application
-resource "kubernetes_namespace" "app_namespace" {
+resource "kubernetes_namespace" "devsu_namespace" {
   metadata {
-    name = "devsu"
+    name = var.app_name
   }
 }
 
 # Create a Kubernetes deployment for the application
 resource "kubernetes_deployment" "devsu_app" {
   metadata {
-    name      = "devsu-app"
-    namespace = kubernetes_namespace.app_namespace.metadata[0].name
+    name      = "${var.app_name}-deployment"
+    namespace = kubernetes_namespace.devsu_namespace.metadata[0].name
     labels = {
-      app = "devsu"
+      app = var.app_name
     }
   }
 
@@ -20,24 +20,24 @@ resource "kubernetes_deployment" "devsu_app" {
 
     selector {
       match_labels = {
-        app = "devsu"
+        app = var.app_name
       }
     }
 
     template {
       metadata {
         labels = {
-          app = "devsu"
+          app = var.app_name
         }
       }
 
       spec {
         container {
-          name  = "devsu"
+          name  = var.app_name
           image = var.image
 
           port {
-            container_port = 8000
+            container_port = var.port
           }
 
           volume_mount {
@@ -46,7 +46,7 @@ resource "kubernetes_deployment" "devsu_app" {
           }
 
           env {
-            name  = "DJANGO_SETTINGS_MODULE"
+            name  = "devsu_SETTINGS_MODULE"
             value = "app.settings"
           }
         }
@@ -55,6 +55,54 @@ resource "kubernetes_deployment" "devsu_app" {
           name = "sqlite-storage"
 
           empty_dir {}
+        }
+      }
+    }
+  }
+}
+
+# Create a Kubernetes service for the application
+resource "kubernetes_service" "devsu_service" {
+  metadata {
+    name      = "devsu-service"
+    namespace = kubernetes_namespace.devsu_namespace.metadata[0].name
+  }
+
+  spec {
+    selector = {
+      app = var.app_name
+    }
+
+    port {
+      port        = var.port
+      target_port = var.port
+    }
+  }
+}
+
+# Create a Kubernetes ingress for the application
+resource "kubernetes_ingress_v1" "devsu_ingress" {
+  metadata {
+    name      = "devsu-ingress"
+    namespace = kubernetes_namespace.devsu_namespace.metadata[0].name
+  }
+
+  spec {
+    rule {
+      host = "jesus.devsu.localhost"
+      http {
+        path {
+          path      = "/"
+          path_type = "Prefix"
+
+          backend {
+            service {
+              name = kubernetes_service.devsu_service.metadata[0].name
+              port {
+                number = var.port
+              }
+            }
+          }
         }
       }
     }
