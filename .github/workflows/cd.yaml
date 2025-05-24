@@ -13,27 +13,18 @@ jobs:
     name: Create k3d Cluster
     runs-on: ubuntu-latest
 
-    outputs:
-      kubeconfig: ${{ steps.k3d.outputs.kubeconfig-contents }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Create k3d cluster
-        id: k3d
         uses: ./.github/actions/create-k3d-cluster
         with:
           cluster-name: ${{ env.CLUSTER_NAME }}
           k3d-config: ${{ env.K3D_CONFIG }}
 
-      - name: Debug kubeconfig output
-        run: echo "${{ steps.k3d.outputs.kubeconfig-contents }}"
-
       - name: Verify cluster
-        run: |
-          echo "${{ steps.k3d.outputs.kubeconfig-contents }}" > ~/.kube/config
-          kubectl get all -A
+        run: kubectl get all -A
         env:
           KUBECONFIG: ~/.kube/config
 
@@ -53,8 +44,9 @@ jobs:
       - name: Write kubeconfig to file
         run: |
           mkdir -p ~/.kube
-          echo "${{ needs.create-cluster.outputs.kubeconfig }}" > ~/.kube/config
+          k3d kubeconfig get ${{ env.CLUSTER_NAME }} > ~/.kube/config
         env:
+          KUBECONFIG: ~/.kube/config
           KUBE_CONFIG_PATH: ~/.kube/config
           TF_VAR_kubeconfig_path: ~/.kube/config
 
