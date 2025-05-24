@@ -6,6 +6,7 @@ on:
 env:
   TF_VAR_database_name: ${{ vars.DATABASE_NAME }}
   CLUSTER_NAME: ${{ vars.CLUSTER_NAME }}
+  K3D_CONFIG: ${{ vars.K3D_CONFIG }}
 
 jobs:
   create-cluster:
@@ -24,6 +25,7 @@ jobs:
         uses: ./.github/actions/create-k3d-cluster
         with:
           cluster-name: ${{ env.CLUSTER_NAME }}
+          k3d-config: ${{ env.K3D_CONFIG }}
 
       - name: Debug kubeconfig output
         run: echo "${{ steps.k3d.outputs.kubeconfig-contents }}"

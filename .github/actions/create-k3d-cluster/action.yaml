@@ -6,6 +6,9 @@ inputs:
   cluster-name:
     description: "Name of the k3d cluster"
     required: true
+  k3d-config:
+    description: "k3d configuration for k3d cluster creation"
+    required: true
 
 outputs:
   kubeconfig-contents:
@@ -24,10 +27,8 @@ runs:
       shell: bash
       run: |
         cat <<EOF > k3d-config.yaml
-        ${K3D_CONFIG_TEMPLATE}
+        ${{ inputs.k3d-config }}
         EOF
-      env:
-        K3D_CONFIG_TEMPLATE: ${{ env.K3D_CONFIG_TEMPLATE }}
 
     - name: Create cluster using config
       shell: bash
