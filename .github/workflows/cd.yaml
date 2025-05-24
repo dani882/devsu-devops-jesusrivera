@@ -40,6 +40,7 @@ jobs:
 
     env:
       KUBE_CONFIG_PATH: ${{ needs.create-cluster.outputs.kubeconfig }}
+      TF_VAR_kubeconfig_path: ${{ needs.create-cluster.outputs.kubeconfig }}
 
     steps:
       - name: Checkout the repository
