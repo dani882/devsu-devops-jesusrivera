@@ -6,7 +6,7 @@ inputs:
   cluster-name:
     description: "Name of the k3d cluster"
     required: true
-  k3d-config:
+  k3d-config-template:
     description: "Path to the k3d config template file"
     required: true
 
@@ -27,7 +27,7 @@ runs:
     - name: Render k3d config file
       uses: nowactions/envsubst@v1
       with:
-        input: ${{ inputs.k3d-config }}
+        input: ${{ inputs.k3d-config-template }}
         output: k3d-config.yaml
       env:
         CLUSTER_NAME: ${{ inputs.cluster-name }}
