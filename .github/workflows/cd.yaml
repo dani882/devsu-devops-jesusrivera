@@ -3,6 +3,9 @@ name: CD
 on:
   workflow_dispatch:
 
+env:
+  TF_VAR_database_name: ${{ vars.DATABASE_NAME }}
+
 jobs:
   create-cluster:
     name: Create k3d Cluster
@@ -61,6 +64,19 @@ jobs:
         id: plan
         run: terraform plan -input=false -no-color
 
-      # - name: Terraform Apply
-      #   if: github.ref == 'refs/heads/main'
-      #   run: terraform apply -auto-approve -input=false
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main'
+        run: terraform apply -auto-approve -input=false
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n devsu
+          kubectl get services -n devsu
+          kubectl get ingress -n devsu
+          kubectl get deployments -n devsu
+
+      - name: Port forward to service
+        run: |
+          kubectl port-forward service/devsu-service 8080:8080 &
+          sleep 5
+          curl http://localhost:8080

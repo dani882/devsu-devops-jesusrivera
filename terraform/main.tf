@@ -46,8 +46,8 @@ resource "kubernetes_deployment" "devsu_app" {
           }
 
           env {
-            name  = "devsu_SETTINGS_MODULE"
-            value = "app.settings"
+            name  = "DJANGO_SETTINGS_MODULE"
+            value = "demo.settings"
           }
         }
 
