@@ -1,5 +1,4 @@
 name: CI
-
 on:
   workflow_dispatch:
   push:
@@ -8,10 +7,8 @@ on:
   pull_request_target:
     types: [opened]
     paths:
-      - "**.py"
       - Dockerfile
       - ".github/workflows/ci.yaml"
-      - "requirements.txt"
 
 # Permissions required for the workflow to push Docker images to the GitHub Container Registry and other actions
 permissions:
@@ -23,7 +20,7 @@ permissions:
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}
   IMAGE_TAG: ${{ github.sha }}
-  PYTHON_VERSION: 3.11.3
+  PYTHON_VERSION: ${{ vars.PYTHON_VERSION }}
 
 jobs:
   build-test-scan:
