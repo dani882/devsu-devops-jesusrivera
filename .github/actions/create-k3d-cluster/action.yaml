@@ -23,7 +23,7 @@ runs:
     - name: Write k3d config template to file
       shell: bash
       run: |
-        printf "%s\n" "$K3D_CONFIG_TEMPLATE" > k3d-template.yaml
+        echo "$K3D_CONFIG_TEMPLATE" > k3d-template.yaml
       env:
         K3D_CONFIG_TEMPLATE: ${{ env.K3D_CONFIG_TEMPLATE }}
 
@@ -34,6 +34,17 @@ runs:
         output: k3d-config.yaml
       env:
         CLUSTER_NAME: ${{ inputs.cluster-name }}
+
+    - name: Validate and debug k3d config file
+      shell: bash
+      run: |
+        echo "----- k3d-config.yaml content -----"
+        cat k3d-config.yaml
+        echo "-----------------------------------"
+        if ! grep -q '^apiVersion:' k3d-config.yaml || ! grep -q '^kind:' k3d-config.yaml; then
+          echo "Invalid k3d config: Missing 'apiVersion' or 'kind'"
+          exit 1
+        fi
 
     - name: Create cluster using rendered config
       shell: bash
