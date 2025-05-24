@@ -20,38 +20,19 @@ runs:
       run: |
         curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
 
-    - name: Write k3d config template to file
+    - name: Write k3d config to file
       shell: bash
       run: |
-        cat <<EOF > k3d-template.yaml
+        cat <<EOF > k3d-config.yaml
         ${K3D_CONFIG_TEMPLATE}
         EOF
       env:
         K3D_CONFIG_TEMPLATE: ${{ env.K3D_CONFIG_TEMPLATE }}
 
-    - name: Render k3d config file
-      uses: nowactions/envsubst@v1
-      with:
-        input: k3d-template.yaml
-        output: k3d-config.yaml
-      env:
-        CLUSTER_NAME: ${{ inputs.cluster-name }}
-
-    - name: Validate and debug k3d config file
+    - name: Create cluster using config
       shell: bash
       run: |
-        echo "----- k3d-config.yaml content -----"
-        cat k3d-config.yaml
-        echo "-----------------------------------"
-        if ! grep -q '^apiVersion:' k3d-config.yaml || ! grep -q '^kind:' k3d-config.yaml; then
-          echo "Invalid k3d config: Missing 'apiVersion' or 'kind'"
-          exit 1
-        fi
-
-    - name: Create cluster using rendered config
-      shell: bash
-      run: |
-        k3d cluster create --config k3d-config.yaml
+        k3d cluster create ${{ inputs.cluster-name }} --config k3d-config.yaml
 
     - name: Export kubeconfig
       id: export-kubeconfig
