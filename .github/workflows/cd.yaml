@@ -25,7 +25,8 @@ jobs:
           cluster-name: devsu
 
       - name: Debug Kubeconfig Output
-        run: echo ${{ steps.k3d.outputs.kubeconfig }}"
+        run: echo "Kubeconfig Output: ${{ steps.k3d.outputs.kubeconfig }}"
+
 
       - name: Verify cluster
         run: kubectl get all -A

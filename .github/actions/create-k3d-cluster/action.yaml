@@ -22,6 +22,7 @@ runs:
         k3d cluster create ${{ inputs.cluster-name }} --wait
 
     - name: Export kubeconfig
+      id: export-kubeconfig
       shell: bash
       run: |
         mkdir -p $HOME/.kube
@@ -29,3 +30,8 @@ runs:
         echo "kubeconfig=$HOME/.kube/config" >> $GITHUB_OUTPUT
         echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
         cat $HOME/.kube/config
+
+outputs:
+  kubeconfig:
+    description: "Path to the generated kubeconfig file"
+    value: ${{ steps.export-kubeconfig.outputs.kubeconfig }}
