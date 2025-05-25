@@ -35,9 +35,8 @@ jobs:
         shell: bash
         working-directory: ./terraform
     env:
-      KUBECONFIG: ~/.kube/config
-      KUBE_CONFIG_PATH: ~/.kube/config
-      TF_VAR_kubeconfig_path: ~/.kube/config
+      KUBECONFIG: ${ { github.workspace }}/.kube/config
+      KUBE_CONFIG_PATH: ${ { github.workspace }}/.kube/config
 
     steps:
       - name: Checkout repository
@@ -45,8 +44,8 @@ jobs:
 
       - name: Write kubeconfig to file
         run: |
-          mkdir -p ~/.kube
-          k3d kubeconfig get ${{ env.CLUSTER_NAME }} > ~/.kube/config
+          mkdir -p ${ { github.workspace }}/.kube
+          k3d kubeconfig get ${{ env.CLUSTER_NAME }} > ${ { github.workspace }}/.kube/config
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
