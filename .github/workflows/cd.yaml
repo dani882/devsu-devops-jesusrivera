@@ -13,11 +13,6 @@ jobs:
     name: Create Cluster and Deploy App
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        shell: bash
-        working-directory: ./terraform
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -28,35 +23,40 @@ jobs:
           cluster-name: ${{ env.CLUSTER_NAME }}
           k3d-config: ${{ env.K3D_CONFIG }}
 
-      - name: Load kubeconfig env
-        run: |
-          echo "KUBECONFIG=$KUBECONFIG"
-          echo "TF_VAR_kubeconfig_path=$TF_VAR_kubeconfig_path"
-
       - name: Verify k3d cluster
-        run: kubectl get all -A
+        run: |
+ 
+          kubectl get all -A
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
+        working-directory: ./terraform
         run: terraform init
 
       - name: Terraform Format Check
+        working-directory: ./terraform
         run: terraform fmt -check
 
       - name: Terraform Validate
+        working-directory: ./terraform
         run: terraform validate
 
       - name: Terraform Plan
+        working-directory: ./terraform
         run: terraform plan -input=false -no-color
+        env:
+          KUBECONFIG: /home/runner/.kube/config
+          TF_VAR_kubeconfig_path: /home/runner/.kube/config
 
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main'
-        run: |
-          export KUBECONFIG=$HOME/.kube/config
-          export TF_VAR_kubeconfig_path=$KUBECONFIG
-          terraform apply -auto-approve -input=false
+        working-directory: ./terraform
+        run: terraform apply -auto-approve -input=false
+        env:
+          KUBECONFIG: /home/runner/.kube/config
+          TF_VAR_kubeconfig_path: /home/runner/.kube/config
 
       - name: Verify deployment
         run: |
