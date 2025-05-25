@@ -21,10 +21,16 @@ variable "port" {
 
 }
 
-variable "replicas" {
-  description = "Number of replicas for the devsu app"
+variable "min_replicas" {
+  description = "Minimum number of replicas for the devsu app"
   type        = number
   default     = 2
+}
+
+variable "max_replicas" {
+  description = "Maximum number of replicas for the devsu app"
+  type        = number
+  default     = 5
 }
 
 variable "database_name" {
