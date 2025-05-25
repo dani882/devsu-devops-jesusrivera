@@ -45,6 +45,7 @@ resource "kubernetes_persistent_volume_claim_v1" "devsu_sqlite_pvc" {
 
     storage_class_name = "local-path"
   }
+  wait_until_bound = false
 }
 
 # Create a Kubernetes deployment for the application
@@ -83,8 +84,8 @@ resource "kubernetes_deployment" "devsu_app" {
           }
 
           volume_mount {
-            mount_path = "/app"
-            name       = "db"
+            mount_path = "/app/data"
+            name       = "db-data"
           }
 
           # Environment variables
@@ -110,7 +111,7 @@ resource "kubernetes_deployment" "devsu_app" {
         }
 
         volume {
-          name = "db"
+          name = "db-data"
 
           persistent_volume_claim {
             claim_name = kubernetes_persistent_volume_claim_v1.devsu_sqlite_pvc.metadata[0].name

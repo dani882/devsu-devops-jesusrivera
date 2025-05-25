@@ -31,8 +31,8 @@ variable "database_name" {
   description = "Name of the database for the devsu app"
   type        = string
   default     = "db.sqlite3"
-  
 }
+
 variable "django_secret_key" {
   description = "Django secret key for the devsu app"
   type        = string
