@@ -12,8 +12,6 @@ jobs:
   create-cluster:
     name: Create k3d Cluster
     runs-on: ubuntu-latest
-    env:
-      KUBECONFIG: ~/.kube/config
 
     steps:
       - name: Checkout code
