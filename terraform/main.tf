@@ -5,6 +5,30 @@ resource "kubernetes_namespace" "devsu_namespace" {
   }
 }
 
+resource "kubernetes_config_map_v1" "devsu_config_map" {
+  metadata {
+    name      = "${var.app_name}-config"
+    namespace = kubernetes_namespace.devsu_namespace.metadata[0].name
+  }
+
+  data = {
+    "DATABASE_NAME" = var.database_name
+  }
+}
+
+# Create a Kubernetes secret for the application
+resource "kubernetes_secret_v1" "devsu_secret" {
+  metadata {
+    name      = "${var.app_name}-secret"
+    namespace = kubernetes_namespace.devsu_namespace.metadata[0].name
+  }
+
+  # Don't use base64encode - kubernetes_secret_v1 does it automatically
+  data = {
+    "DJANGO_SECRET_KEY" = var.django_secret_key
+  }
+}
+
 # Create a Kubernetes deployment for the application
 resource "kubernetes_deployment" "devsu_app" {
   metadata {
@@ -45,26 +69,52 @@ resource "kubernetes_deployment" "devsu_app" {
             name       = "sqlite-storage"
           }
 
+          # Add DJANGO_SETTINGS_MODULE
           env {
             name  = "DJANGO_SETTINGS_MODULE"
             value = "demo.settings"
           }
+
+          env {
+            name = "DATABASE_NAME"
+            value_from {
+              config_map_key_ref {
+                name = kubernetes_config_map_v1.devsu_config_map.metadata[0].name
+                key  = "DATABASE_NAME"
+              }
+            }
+          }
+
+          env {
+            name = "DJANGO_SECRET_KEY"
+            value_from {
+              secret_key_ref {
+                name = kubernetes_secret_v1.devsu_secret.metadata[0].name
+                key  = "DJANGO_SECRET_KEY"
+              }
+            }
+          }
         }
 
+        # Add the volume definition
         volume {
           name = "sqlite-storage"
-
           empty_dir {}
         }
       }
     }
+  }
+
+  timeouts {
+    create = "5m"
+    update = "5m"
   }
 }
 
 # Create a Kubernetes service for the application
 resource "kubernetes_service" "devsu_service" {
   metadata {
-    name      = "devsu-service"
+    name      = "${var.app_name}-service"
     namespace = kubernetes_namespace.devsu_namespace.metadata[0].name
   }
 
@@ -83,7 +133,7 @@ resource "kubernetes_service" "devsu_service" {
 # Create a Kubernetes ingress for the application
 resource "kubernetes_ingress_v1" "devsu_ingress" {
   metadata {
-    name      = "devsu-ingress"
+    name      = "${var.app_name}-ingress"
     namespace = kubernetes_namespace.devsu_namespace.metadata[0].name
   }
 

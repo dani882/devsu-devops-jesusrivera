@@ -29,7 +29,7 @@ runs:
       shell: bash
       run: |
         k3d cluster create ${{ inputs.cluster-name }} --config k3d-config.yaml
-        kubectl cluster-info --request-timeout=30s
+        kubectl cluster-info
 
     - name: Export kubeconfig to ~/.kube/config
       shell: bash

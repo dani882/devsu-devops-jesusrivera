@@ -5,6 +5,7 @@ on:
 
 env:
   TF_VAR_database_name: ${{ vars.DATABASE_NAME }}
+  TF_VAR_django_secret_key: ${{ secrets.DJANGO_SECRET_KEY }}
   CLUSTER_NAME: ${{ vars.CLUSTER_NAME }}
   K3D_CONFIG: ${{ vars.K3D_CONFIG }}
 
