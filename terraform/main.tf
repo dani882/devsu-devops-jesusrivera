@@ -23,9 +23,27 @@ resource "kubernetes_secret_v1" "devsu_secret" {
     namespace = kubernetes_namespace.devsu_namespace.metadata[0].name
   }
 
-  # Don't use base64encode - kubernetes_secret_v1 does it automatically
   data = {
     "DJANGO_SECRET_KEY" = var.django_secret_key
+  }
+}
+
+resource "kubernetes_persistent_volume_claim_v1" "devsu_sqlite_pvc" {
+  metadata {
+    name      = "${var.app_name}-pvc"
+    namespace = kubernetes_namespace.devsu_namespace.metadata[0].name
+  }
+
+  spec {
+    access_modes = ["ReadWriteOnce"]
+
+    resources {
+      requests = {
+        storage = "1Gi"
+      }
+    }
+
+    storage_class_name = "local-path"
   }
 }
 
@@ -65,16 +83,11 @@ resource "kubernetes_deployment" "devsu_app" {
           }
 
           volume_mount {
-            mount_path = "/code/db"
-            name       = "sqlite-storage"
+            mount_path = "/app"
+            name       = "db"
           }
 
-          # Add DJANGO_SETTINGS_MODULE
-          env {
-            name  = "DJANGO_SETTINGS_MODULE"
-            value = "demo.settings"
-          }
-
+          # Environment variables
           env {
             name = "DATABASE_NAME"
             value_from {
@@ -96,10 +109,12 @@ resource "kubernetes_deployment" "devsu_app" {
           }
         }
 
-        # Add the volume definition
         volume {
-          name = "sqlite-storage"
-          empty_dir {}
+          name = "db"
+
+          persistent_volume_claim {
+            claim_name = kubernetes_persistent_volume_claim_v1.devsu_sqlite_pvc.metadata[0].name
+          }
         }
       }
     }
