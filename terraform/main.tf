@@ -23,6 +23,7 @@ resource "kubernetes_secret_v1" "devsu_secret" {
     namespace = kubernetes_namespace.devsu_namespace.metadata[0].name
   }
 
+  type = "Opaque"
   data = {
     "DJANGO_SECRET_KEY" = var.django_secret_key
   }
@@ -32,6 +33,9 @@ resource "kubernetes_persistent_volume_claim_v1" "devsu_sqlite_pvc" {
   metadata {
     name      = "${var.app_name}-pvc"
     namespace = kubernetes_namespace.devsu_namespace.metadata[0].name
+    labels = {
+      app = var.app_name
+    }
   }
 
   spec {
@@ -81,6 +85,15 @@ resource "kubernetes_deployment" "devsu_app" {
 
           port {
             container_port = var.port
+          }
+
+          resources {
+            requests = {
+              cpu = "1m"
+            }
+            limits = {
+              cpu = "8m"
+            }
           }
 
           volume_mount {
@@ -169,6 +182,36 @@ resource "kubernetes_ingress_v1" "devsu_ingress" {
               }
             }
           }
+        }
+      }
+    }
+  }
+}
+
+# Create a Kubernetes Horizontal Pod Autoscaler (HPA) for the application
+resource "kubernetes_horizontal_pod_autoscaler_v2" "devsu_hpa" {
+  metadata {
+    name      = "${var.app_name}-hpa"
+    namespace = kubernetes_namespace.devsu_namespace.metadata[0].name
+  }
+
+  spec {
+    min_replicas = var.min_replicas
+    max_replicas = var.max_replicas
+
+    scale_target_ref {
+      api_version = "apps/v1"
+      kind        = "Deployment"
+      name        = kubernetes_deployment.devsu_app.metadata[0].name
+    }
+
+    metric {
+      type = "Resource"
+      resource {
+        name = "cpu"
+        target {
+          type                = "Utilization"
+          average_utilization = 5
         }
       }
     }

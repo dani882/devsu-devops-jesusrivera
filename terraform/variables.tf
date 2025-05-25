@@ -21,6 +21,11 @@ variable "port" {
 
 }
 
+variable "replicas" {
+  description = "Number of replicas for the devsu app"
+  type        = number
+  default     = 2
+}
 variable "min_replicas" {
   description = "Minimum number of replicas for the devsu app"
   type        = number
