@@ -12,6 +12,8 @@ jobs:
   create-cluster:
     name: Create k3d Cluster
     runs-on: ubuntu-latest
+    env:
+      KUBECONFIG: ~/.kube/config
 
     steps:
       - name: Checkout code
@@ -25,8 +27,6 @@ jobs:
 
       - name: Verify cluster
         run: kubectl get all -A
-        env:
-          KUBECONFIG: ~/.kube/config
 
   deploy-app:
     name: Deploy Devsu App
@@ -36,6 +36,10 @@ jobs:
       run:
         shell: bash
         working-directory: ./terraform
+    env:
+      KUBECONFIG: ~/.kube/config
+      KUBE_CONFIG_PATH: ~/.kube/config
+      TF_VAR_kubeconfig_path: ~/.kube/config
 
     steps:
       - name: Checkout repository
@@ -45,11 +49,6 @@ jobs:
         run: |
           mkdir -p ~/.kube
           k3d kubeconfig get ${{ env.CLUSTER_NAME }} > ~/.kube/config
-        env:
-          KUBECONFIG: ~/.kube/config
-          KUBE_CONFIG_PATH: ~/.kube/config
-          TF_VAR_kubeconfig_path: ~/.kube/config
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
