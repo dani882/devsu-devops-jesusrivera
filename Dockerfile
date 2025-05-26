@@ -20,7 +20,7 @@ WORKDIR /app
 
 USER root
 
-RUN apt-get update && apt-get install -y curl
+RUN apt-get update && apt-get install -y curl procps netcat
 # Create a non-privileged user that the app will run under.
 # See https://docs.docker.com/go/dockerfile-user-best-practices/
 ARG UID=10001

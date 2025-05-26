@@ -154,6 +154,8 @@ resource "kubernetes_deployment" "devsu_app" {
           name  = var.app_name
           image = var.image
 
+         # command = ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+
           port {
             container_port = var.port
           }
