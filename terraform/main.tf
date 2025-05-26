@@ -53,76 +53,6 @@ resource "kubernetes_persistent_volume_claim_v1" "devsu_sqlite_pvc" {
   wait_until_bound = false
 }
 
-# Run Django migrations before the deployment
-resource "kubernetes_job_v1" "devsu_migrate" {
-  metadata {
-    name      = "${var.app_name}-migrate"
-    namespace = kubernetes_namespace.devsu_namespace.metadata[0].name
-    labels = {
-      app = var.app_name
-    }
-  }
-
-
-  spec {
-    backoff_limit = 1
-
-    template {
-      metadata {
-        labels = {
-          app = var.app_name
-        }
-      }
-
-      spec {
-        restart_policy = "Never"
-
-        container {
-          name  = "migrate"
-          image = var.image
-
-          working_dir = "/app"
-
-          command = ["sh", "-c", "python manage.py makemigrations --noinput && python manage.py migrate --noinput"]
-
-          volume_mount {
-            mount_path = "/app/data"
-            name       = "db-data"
-          }
-
-          env {
-            name = "DATABASE_NAME"
-            value_from {
-              config_map_key_ref {
-                name = kubernetes_config_map_v1.devsu_config_map.metadata[0].name
-                key  = "DATABASE_NAME"
-              }
-            }
-          }
-
-          env {
-            name = "DJANGO_SECRET_KEY"
-            value_from {
-              secret_key_ref {
-                name = kubernetes_secret_v1.devsu_secret.metadata[0].name
-                key  = "DJANGO_SECRET_KEY"
-              }
-            }
-          }
-        }
-
-        volume {
-          name = "db-data"
-
-          persistent_volume_claim {
-            claim_name = kubernetes_persistent_volume_claim_v1.devsu_sqlite_pvc.metadata[0].name
-          }
-        }
-      }
-    }
-  }
-}
-
 # Create a Kubernetes deployment for the application
 resource "kubernetes_deployment" "devsu_app" {
   metadata {
@@ -150,31 +80,59 @@ resource "kubernetes_deployment" "devsu_app" {
       }
 
       spec {
+        init_container {
+          name  = "init-migrate"
+          image = var.image
+
+          working_dir = "/app"
+          command     = ["sh", "-c", "python manage.py migrate --noinput"]
+
+          volume_mount {
+            name       = "db-data"
+            mount_path = "/app/data"
+          }
+
+          env {
+            name = "DATABASE_NAME"
+            value_from {
+              config_map_key_ref {
+                name = kubernetes_config_map_v1.devsu_config_map.metadata[0].name
+                key  = "DATABASE_NAME"
+              }
+            }
+          }
+
+          env {
+            name = "DJANGO_SECRET_KEY"
+            value_from {
+              secret_key_ref {
+                name = kubernetes_secret_v1.devsu_secret.metadata[0].name
+                key  = "DJANGO_SECRET_KEY"
+              }
+            }
+          }
+        }
+
         container {
           name  = var.app_name
           image = var.image
 
-         # command = ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+          command = ["gunicorn", "demo.wsgi:application", "--bind", "0.0.0.0:${var.port}"]
 
           port {
             container_port = var.port
           }
 
           resources {
-            requests = {
-              cpu = "1m"
-            }
-            limits = {
-              cpu = "8m"
-            }
+            limits   = { cpu = "8m" }
+            requests = { cpu = "1m" }
           }
 
           volume_mount {
-            mount_path = "/app/data"
             name       = "db-data"
+            mount_path = "/app/data"
           }
 
-          # Environment variables
           env {
             name = "DATABASE_NAME"
             value_from {
@@ -206,13 +164,6 @@ resource "kubernetes_deployment" "devsu_app" {
       }
     }
   }
-
-  timeouts {
-    create = "5m"
-    update = "5m"
-  }
-
-  depends_on = [kubernetes_job_v1.devsu_migrate]
 }
 
 # Create a Kubernetes service for the application
@@ -239,6 +190,9 @@ resource "kubernetes_ingress_v1" "devsu_ingress" {
   metadata {
     name      = "${var.app_name}-ingress"
     namespace = kubernetes_namespace.devsu_namespace.metadata[0].name
+    annotations = {
+      "kubernetes.io/ingress.class" = "traefik"
+    }
   }
 
   spec {
