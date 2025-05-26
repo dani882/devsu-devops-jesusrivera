@@ -7,11 +7,6 @@ kubeAPI:
   hostIP: "127.0.0.1"
   hostPort: "6443"
 
-ports:
-  - port: "80:80"
-    nodeFilters:
-      - loadbalancer
-
 options:
   k3d:
     wait: true

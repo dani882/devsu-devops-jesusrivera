@@ -20,7 +20,7 @@ WORKDIR /app
 
 USER root
 
-RUN apt-get update && apt-get install -y curl procps netcat
+RUN apt-get update && apt-get install -y curl procps netcat iproute2
 # Create a non-privileged user that the app will run under.
 # See https://docs.docker.com/go/dockerfile-user-best-practices/
 ARG UID=10001
