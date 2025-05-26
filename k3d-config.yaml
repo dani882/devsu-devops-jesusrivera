@@ -2,9 +2,16 @@ apiVersion: k3d.io/v1alpha5
 kind: Simple
 servers: 1
 agents: 1
+
 kubeAPI:
   hostIP: "127.0.0.1"
   hostPort: "6443"
+
+ports:
+  - port: "8000:80"
+    nodeFilters:
+      - loadbalancer
+
 options:
   k3d:
     wait: true

@@ -12,7 +12,7 @@ resource "kubernetes_config_map_v1" "devsu_config_map" {
   }
 
   data = {
-    "DATABASE_NAME" = var.database_name
+    "DATABASE_NAME" = "data/${var.database_name}"
   }
 }
 
@@ -49,7 +49,78 @@ resource "kubernetes_persistent_volume_claim_v1" "devsu_sqlite_pvc" {
 
     storage_class_name = "local-path"
   }
+
   wait_until_bound = false
+}
+
+# Run Django migrations before the deployment
+resource "kubernetes_job_v1" "devsu_migrate" {
+  metadata {
+    name      = "${var.app_name}-migrate"
+    namespace = kubernetes_namespace.devsu_namespace.metadata[0].name
+    labels = {
+      app = var.app_name
+    }
+  }
+
+
+  spec {
+    backoff_limit = 1
+
+    template {
+      metadata {
+        labels = {
+          app = var.app_name
+        }
+      }
+
+      spec {
+        restart_policy = "Never"
+
+        container {
+          name  = "migrate"
+          image = var.image
+
+          working_dir = "/app"
+
+          command = ["sh", "-c", "python manage.py makemigrations --noinput && python manage.py migrate --noinput"]
+
+          volume_mount {
+            mount_path = "/app/data"
+            name       = "db-data"
+          }
+
+          env {
+            name = "DATABASE_NAME"
+            value_from {
+              config_map_key_ref {
+                name = kubernetes_config_map_v1.devsu_config_map.metadata[0].name
+                key  = "DATABASE_NAME"
+              }
+            }
+          }
+
+          env {
+            name = "DJANGO_SECRET_KEY"
+            value_from {
+              secret_key_ref {
+                name = kubernetes_secret_v1.devsu_secret.metadata[0].name
+                key  = "DJANGO_SECRET_KEY"
+              }
+            }
+          }
+        }
+
+        volume {
+          name = "db-data"
+
+          persistent_volume_claim {
+            claim_name = kubernetes_persistent_volume_claim_v1.devsu_sqlite_pvc.metadata[0].name
+          }
+        }
+      }
+    }
+  }
 }
 
 # Create a Kubernetes deployment for the application
@@ -138,6 +209,8 @@ resource "kubernetes_deployment" "devsu_app" {
     create = "5m"
     update = "5m"
   }
+
+  depends_on = [kubernetes_job_v1.devsu_migrate]
 }
 
 # Create a Kubernetes service for the application
