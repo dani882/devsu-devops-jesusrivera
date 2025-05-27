@@ -65,8 +65,6 @@ jobs:
           kubectl get svc -n devsu
           kubectl get ingress -n devsu
 
-      - name: Port forward and test
+      - name: Test application
         run: |
-          kubectl port-forward service/devsu-service 8080:8000 -n devsu &
-          sleep 5
-          curl http://localhost:8080
+          curl http://localhost/api/users/
