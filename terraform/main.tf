@@ -117,15 +117,43 @@ resource "kubernetes_deployment" "devsu_app" {
           name  = var.app_name
           image = var.image
 
-          command = ["python", "manage.py", "runserver", "0.0.0.0:${var.port}"]
+          command = ["python", "manage.py", "runserver", "0.0.0.0:${var.app_port}"]
 
           port {
-            container_port = var.port
+            container_port = var.app_port
+          }
+
+          readiness_probe {
+            http_get {
+              path = "/api/"
+              port = var.app_port
+            }
+            initial_delay_seconds = 30
+            period_seconds        = 10
+            timeout_seconds       = 5
+            failure_threshold     = 3
+            success_threshold     = 1
+          }
+
+          liveness_probe {
+            http_get {
+              path = "/api/"
+              port = var.app_port
+            }
+            initial_delay_seconds = 60
+            period_seconds        = 30
+            timeout_seconds       = 10
+            failure_threshold     = 5
+            success_threshold     = 1
           }
 
           resources {
-            limits   = { cpu = "8m" }
-            requests = { cpu = "1m" }
+            limits = {
+              cpu = "100m"
+            }
+            requests = {
+              cpu = "50m"
+            }
           }
 
           volume_mount {
@@ -179,8 +207,8 @@ resource "kubernetes_service" "devsu_service" {
     }
 
     port {
-      port        = var.port
-      target_port = var.port
+      port        = var.service_port
+      target_port = var.app_port
     }
   }
 }
@@ -197,7 +225,7 @@ resource "kubernetes_ingress_v1" "devsu_ingress" {
 
   spec {
     rule {
-      host = "jesus.devsu.localhost"
+      host = "localhost"
       http {
         path {
           path      = "/"
@@ -207,7 +235,7 @@ resource "kubernetes_ingress_v1" "devsu_ingress" {
             service {
               name = kubernetes_service.devsu_service.metadata[0].name
               port {
-                number = var.port
+                number = var.service_port
               }
             }
           }

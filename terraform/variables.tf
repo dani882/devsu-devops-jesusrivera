@@ -14,13 +14,19 @@ variable "image" {
   type        = string
 }
 
-variable "port" {
+variable "app_port" {
   description = "Port for the devsu app"
   type        = number
   default     = 8000
 
 }
 
+variable "service_port" {
+  description = "Port for the Kubernetes service"
+  type        = number
+  default     = 80
+
+}
 variable "replicas" {
   description = "Number of replicas for the devsu app"
   type        = number
