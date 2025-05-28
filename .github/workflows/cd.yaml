@@ -69,12 +69,18 @@ jobs:
         run: |
           # Example of accessing the API endpoint - at this point, there's no user created
           # so it should return an empty list
-          curl http://localhost/api/users/
+          echo "GET /api/users/ (should be empty)"
+          curl -s http://localhost/api/users/
+          echo -e "\n---"
 
           # Example of creating a user via the API
-          curl -X POST http://localhost/api/users/ \
+          echo "POST /api/users/ (create new user)"
+          curl -s -X POST http://localhost/api/users/ \
           -H "Content-Type: application/json" \
           -d '{"dni": "123456789", "name": "Jesus Rivera"}'
+          echo -e "\n---"
           
           # Show new added user
-          curl http://localhost/api/users/
+          echo "GET /api/users/ (should list the created user)"
+          curl -s http://localhost/api/users/
+          echo
