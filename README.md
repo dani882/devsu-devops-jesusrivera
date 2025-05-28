@@ -1,4 +1,4 @@
-# Demo Devops Python
+# Demo DevOps Python
 
 This is a simple application to be used in the technical test of DevOps.
 
@@ -133,6 +133,50 @@ If the user id does not exist, we will receive status 404 and the following mess
     "detail": "Not found."
 }
 ```
+
+---
+
+## DevOps Implementation
+
+### Dockerization
+- Dockerfile includes best practices: non-root user, environment variables and port exposure.
+- SQLite data is stored in `/app/data/db.sqlite3`
+
+### CI Pipeline (GitHub Actions) - .github/workflows/ci.yaml
+- Run tests with Django's test framework
+- Code style check with `flake8`
+- Static code analysis with `bandit`
+- Code coverage with `coverage.py`
+- Minimum 80% threshold reported on PRs with `cobertura-action`
+- Docker build & push to GHCR
+- SBOM generation with `anchore/sbom-action`
+- Docker image vulnerability scan using `trivy`
+
+![CI Diagram](images/ci.png)
+
+### CD Pipeline (GitHub Actions) - .github/workflows/cd.yaml
+- Create local `k3d` Kubernetes cluster dynamically (using config file saved as repository variable)
+- Terraform-based infrastructure deployment:
+  - Namespace
+  - Secret
+  - ConfigMap
+  - Deployment (with `initContainer` migration)
+  - HPA (Horizontal Pod Autoscaler)
+  - Ingress via `traefik`
+
+  ![CD Diagram](images/cd.png)
+
+### Kubernetes Configuration
+- `ConfigMap`: stores the SQLite DB path
+- `Secret`: stores Django secret key
+- `PVC`: for SQLite file persistence
+- `Ingress`: exposed with Traefik on `localhost`
+- `readinessProbe` and `livenessProbe` added
+
+---
+
+## TODO
+- Add TLS support or public endpoint(in cloud environment) if needed
 
 ## License
 
