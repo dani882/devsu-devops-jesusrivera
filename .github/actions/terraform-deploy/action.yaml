@@ -1,0 +1,47 @@
+name: Terraform Deploy
+description: Setup and deploy Terraform configuration
+inputs:
+  kubeconfig-path:
+    description: Path to kubeconfig
+    required: true
+  apply:
+    description: Whether to apply the plan
+    default: "false"
+    required: false
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Terraform Init
+      run: terraform init
+      shell: bash
+      working-directory: ./terraform
+
+    - name: Terraform Format Check
+      run: terraform fmt -check
+      shell: bash
+      working-directory: ./terraform
+
+    - name: Terraform Validate
+      run: terraform validate
+      shell: bash
+      working-directory: ./terraform
+
+    - name: Terraform Plan
+      run: terraform plan -input=false -no-color
+      shell: bash
+      working-directory: ./terraform
+      env:
+        KUBECONFIG: ${{ inputs.kubeconfig-path }}
+        TF_VAR_kubeconfig_path: ${{ inputs.kubeconfig-path }}
+
+    - name: Terraform Apply
+      if: ${{ inputs.apply == 'true' }}
+      run: terraform apply -auto-approve -input=false
+      shell: bash
+      working-directory: ./terraform
+      env:
+        KUBECONFIG: ${{ inputs.kubeconfig-path }}
+        TF_VAR_kubeconfig_path: ${{ inputs.kubeconfig-path }}
