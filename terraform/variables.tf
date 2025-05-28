@@ -53,6 +53,5 @@ variable "database_name" {
 variable "django_secret_key" {
   description = "Django secret key for the devsu app"
   type        = string
-  default     = "django-insecure-wc2i2*6^17$9!u+(u66@q_rg)++n1x-^(0-$3yz2f(n=_-o*7="
   sensitive   = true
 }
